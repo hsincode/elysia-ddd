@@ -1,0 +1,671 @@
+<title>elysia-ddd 設計図</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+JP:wght@400;500;700&family=Shippori+Mincho+B1:wght@700;800&display=swap">
+<style>
+  :root {
+    --paper: #f5f7f6;
+    --sheet: #ffffff;
+    --ink: #1c2427;
+    --muted: #5a6770;
+    --rule: #d3dad8;
+    --rule-strong: #9fb0b3;
+    --indigo: #2c4a7c;
+    --indigo-soft: #e6ecf6;
+    --amber: #9a5b0e;
+    --amber-soft: #f7ecdc;
+    --ok: #2b7a4b;
+    --ok-soft: #e3f2e8;
+    --bad: #a83737;
+    --bad-soft: #f8e4e2;
+    --grid: rgba(44, 74, 124, 0.07);
+    --code-bg: #eef2f1;
+    --focus: #2c4a7c;
+    --display: "Shippori Mincho B1", "Hiragino Mincho ProN", "Yu Mincho", serif;
+    --body: "IBM Plex Sans JP", "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
+    --mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      color-scheme: dark;
+      --paper: #121719;
+      --sheet: #182024;
+      --ink: #e2e8e7;
+      --muted: #98a5ac;
+      --rule: #2a3438;
+      --rule-strong: #4b5a60;
+      --indigo: #93aee0;
+      --indigo-soft: #1d2a3f;
+      --amber: #e3a858;
+      --amber-soft: #33261a;
+      --ok: #74c393;
+      --ok-soft: #173024;
+      --bad: #e58a84;
+      --bad-soft: #3a1f1f;
+      --grid: rgba(147, 174, 224, 0.07);
+      --code-bg: #1e282c;
+      --focus: #93aee0;
+    }
+  }
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --paper: #121719;
+    --sheet: #182024;
+    --ink: #e2e8e7;
+    --muted: #98a5ac;
+    --rule: #2a3438;
+    --rule-strong: #4b5a60;
+    --indigo: #93aee0;
+    --indigo-soft: #1d2a3f;
+    --amber: #e3a858;
+    --amber-soft: #33261a;
+    --ok: #74c393;
+    --ok-soft: #173024;
+    --bad: #e58a84;
+    --bad-soft: #3a1f1f;
+    --grid: rgba(147, 174, 224, 0.07);
+    --code-bg: #1e282c;
+    --focus: #93aee0;
+  }
+
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.8;
+    padding-inline: 16px;
+    padding-block: 0 64px;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--indigo); text-underline-offset: 3px; }
+  a:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; border-radius: 2px; }
+  code, .mono { font-family: var(--mono); font-size: 0.88em; }
+  :not(pre) > code { background: var(--code-bg); padding: 0.1em 0.35em; border-radius: 3px; overflow-wrap: anywhere; }
+  h1, h2, h3 { text-wrap: balance; }
+
+  .page { max-width: 1160px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 0 48px; }
+  @media (min-width: 1000px) { .page { grid-template-columns: 210px minmax(0, 1fr); } }
+
+  /* 表題の部分：設計図の方眼 */
+  .hero {
+    grid-column: 1 / -1;
+    padding-block: 48px 40px;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 24px 24px;
+    background-position: -1px -1px;
+    border-bottom: 1px solid var(--rule-strong);
+    margin-bottom: 40px;
+    display: grid;
+    gap: 28px;
+  }
+  @media (min-width: 860px) { .hero { grid-template-columns: minmax(0, 1fr) 360px; align-items: end; } }
+  .eyebrow { margin: 0; font-size: 12px; letter-spacing: 0.12em; color: var(--muted); }
+  .hero h1 {
+    font-family: var(--display);
+    font-weight: 800;
+    font-size: clamp(36px, 6vw, 60px);
+    line-height: 1.15;
+    margin: 8px 0 16px;
+    letter-spacing: 0.02em;
+  }
+  .hero h1 .name { font-family: var(--mono); font-weight: 500; letter-spacing: -0.01em; font-size: 0.82em; color: var(--indigo); }
+  .lede { margin: 0; max-width: 40em; color: var(--ink); }
+
+  .title-block { border: 1.5px solid var(--ink); background: var(--sheet); border-collapse: collapse; width: 100%; font-size: 12.5px; line-height: 1.5; }
+  .title-block caption { caption-side: top; text-align: left; font-size: 11px; letter-spacing: 0.14em; color: var(--muted); padding-bottom: 6px; }
+  .title-block th, .title-block td { border: 1px solid var(--rule-strong); padding: 6px 10px; text-align: left; vertical-align: top; }
+  .title-block th { width: 5.5em; font-weight: 500; color: var(--muted); white-space: nowrap; }
+  .title-block td { font-variant-numeric: tabular-nums; }
+
+  /* 目次 */
+  .toc { font-size: 13px; margin-bottom: 32px; }
+  .toc details { border: 1px solid var(--rule); background: var(--sheet); padding: 10px 14px; border-radius: 4px; }
+  .toc summary { cursor: pointer; font-weight: 500; }
+  .toc ol { list-style: none; margin: 10px 0 0; padding: 0; display: grid; gap: 2px; }
+  .toc a { display: grid; grid-template-columns: 2.2em 1fr; text-decoration: none; color: var(--ink); padding: 3px 0; }
+  .toc a span { font-family: var(--mono); color: var(--muted); font-variant-numeric: tabular-nums; }
+  .toc a:hover { color: var(--indigo); }
+  @media (min-width: 1000px) {
+    .toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; }
+    .toc details { border: 0; background: none; padding: 0; }
+    .toc summary { list-style: none; font-size: 11px; letter-spacing: 0.14em; color: var(--muted); pointer-events: none; }
+    .toc summary::-webkit-details-marker { display: none; }
+  }
+
+  main { min-width: 0; }
+  section { padding-block: 8px 40px; border-top: 1px solid var(--rule); scroll-margin-top: 16px; }
+  section:first-child { border-top: 0; padding-top: 0; }
+  .section-head { display: flex; align-items: baseline; gap: 14px; margin: 24px 0 12px; }
+  .section-head .no { font-family: var(--mono); font-size: 13px; color: var(--indigo); font-variant-numeric: tabular-nums; border: 1px solid var(--indigo); padding: 0 6px; border-radius: 2px; line-height: 1.6; }
+  h2 { font-family: var(--display); font-weight: 800; font-size: clamp(24px, 3.2vw, 30px); line-height: 1.3; margin: 0; letter-spacing: 0.02em; }
+  h3 { font-size: 16px; margin: 32px 0 8px; font-weight: 700; }
+  p { margin: 0 0 14px; max-width: 42em; }
+  .prose-list { margin: 0 0 16px; padding-left: 1.3em; max-width: 42em; display: grid; gap: 6px; }
+  .note { font-size: 13px; color: var(--muted); }
+
+  figure { margin: 20px 0 24px; border: 1px solid var(--rule); background: var(--sheet); border-radius: 4px; }
+  figure .diagram { overflow-x: auto; padding: 20px 16px 8px; }
+  figure pre.mermaid { margin: 0; background: none; text-align: center; font-family: var(--body); font-size: 13px; min-width: 520px; }
+  figcaption { font-size: 12px; color: var(--muted); padding: 8px 16px 12px; border-top: 1px dashed var(--rule); }
+  figcaption b { color: var(--ink); font-weight: 500; font-family: var(--mono); margin-right: 8px; }
+
+  .table-wrap { overflow-x: auto; margin: 16px 0 24px; border: 1px solid var(--rule); border-radius: 4px; background: var(--sheet); }
+  table.data { border-collapse: collapse; width: 100%; font-size: 13.5px; line-height: 1.6; font-variant-numeric: tabular-nums; }
+  table.data th, table.data td { padding: 9px 12px; text-align: left; vertical-align: top; border-bottom: 1px solid var(--rule); }
+  table.data thead th { font-size: 12px; font-weight: 500; color: var(--muted); letter-spacing: 0.04em; background: var(--paper); white-space: nowrap; }
+  table.data tbody tr:last-child > * { border-bottom: 0; }
+  table.data td code { white-space: nowrap; }
+  .wide { min-width: 760px; }
+
+  /* 状態遷移の表 */
+  table.matrix { border-collapse: collapse; width: 100%; min-width: 560px; font-size: 13px; }
+  table.matrix th, table.matrix td { border: 1px solid var(--rule); padding: 8px 10px; text-align: center; }
+  table.matrix thead th { font-family: var(--mono); font-weight: 500; font-size: 12px; background: var(--paper); color: var(--muted); }
+  table.matrix tbody th { font-family: var(--mono); font-weight: 500; text-align: left; background: var(--paper); white-space: nowrap; }
+  table.matrix td.go { background: var(--indigo-soft); color: var(--indigo); font-family: var(--mono); font-weight: 500; }
+  table.matrix td.no { color: var(--muted); font-size: 12px; }
+
+  .pill { display: inline-block; font-family: var(--mono); font-size: 11.5px; padding: 0 7px; border-radius: 999px; border: 1px solid currentColor; line-height: 1.7; white-space: nowrap; }
+  .pill.event { color: var(--amber); background: var(--amber-soft); border-color: transparent; }
+  .pill.sync { color: var(--indigo); background: var(--indigo-soft); border-color: transparent; }
+  .found { display: inline-block; font-size: 11px; font-weight: 700; color: var(--bad); background: var(--bad-soft); padding: 0 6px; border-radius: 3px; margin-right: 6px; white-space: nowrap; }
+
+  .guarantees { display: grid; gap: 12px; margin: 16px 0 24px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .guarantee { border-top: 2px solid var(--amber); padding-top: 10px; }
+  .guarantee h4 { margin: 0 0 4px; font-size: 14px; }
+  .guarantee p { font-size: 13px; color: var(--muted); margin: 0; }
+
+  /* エッジケースの絞り込み */
+  .filters { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 4px; }
+  .filters button {
+    font: inherit; font-size: 13px; cursor: pointer; border: 1px solid var(--rule-strong); background: var(--sheet); color: var(--ink);
+    padding: 4px 12px; border-radius: 999px; font-variant-numeric: tabular-nums;
+  }
+  .filters button[aria-pressed="true"] { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+  .filters .count { color: inherit; opacity: 0.7; margin-left: 4px; font-family: var(--mono); font-size: 11.5px; }
+  .edge-cat { font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+
+  details.adr { border-bottom: 1px solid var(--rule); padding: 10px 0; }
+  details.adr:first-of-type { border-top: 1px solid var(--rule); }
+  details.adr summary { cursor: pointer; font-weight: 500; display: grid; grid-template-columns: 2.4em 1fr; }
+  details.adr summary span { font-family: var(--mono); color: var(--indigo); font-variant-numeric: tabular-nums; }
+  details.adr dl { margin: 10px 0 4px 2.4em; display: grid; grid-template-columns: 5.5em 1fr; gap: 6px 12px; font-size: 14px; max-width: 42em; }
+  details.adr dt { color: var(--muted); font-size: 12.5px; padding-top: 2px; }
+  details.adr dd { margin: 0; }
+
+  .code-block { position: relative; margin: 12px 0 20px; }
+  .code-block pre { margin: 0; background: var(--code-bg); border: 1px solid var(--rule); border-radius: 4px; padding: 14px 16px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.7; }
+  .copy { position: absolute; top: 8px; right: 8px; font: inherit; font-size: 12px; cursor: pointer; border: 1px solid var(--rule-strong); background: var(--sheet); color: var(--ink); border-radius: 3px; padding: 1px 8px; }
+  .steps { margin: 0 0 16px; padding-left: 1.4em; display: grid; gap: 8px; max-width: 42em; }
+
+  footer { grid-column: 1 / -1; border-top: 1px solid var(--rule-strong); margin-top: 24px; padding-top: 16px; font-size: 12.5px; color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+  @media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="page">
+  <header class="hero">
+    <div>
+      <p class="eyebrow">BUN + ELYSIAJS ／ ドメイン駆動設計のテンプレート</p>
+      <h1><span class="name">elysia-ddd</span><br>設計図</h1>
+      <p class="lede">カタログ・在庫・注文の 3 つの境界づけられたコンテキストを、1 つのプロセスで動かすモジュラーモノリス。注文と在庫は Saga で確定・却下・取消・期限切れを回し、コンテキスト間のイベントは Transactional Outbox で「集約ごとの順序」と「購読ごとに 1 回」を守って届ける。</p>
+    </div>
+    <table class="title-block">
+      <caption>表題欄</caption>
+      <tbody>
+        <tr><th>名称</th><td>elysia-ddd</td></tr>
+        <tr><th>構成</th><td>モジュラーモノリス／catalog・inventory・ordering</td></tr>
+        <tr><th>実行環境</th><td>Bun 1.4 · Elysia 1.4 · Drizzle 0.45<br>PostgreSQL 18（開発とテストは PGlite）</td></tr>
+        <tr><th>検証</th><td>テスト 102 件（2 件は実 PostgreSQL での同時実行）</td></tr>
+        <tr><th>版・日付</th><td>0.2 ／ 2026-09-28</td></tr>
+      </tbody>
+    </table>
+  </header>
+
+  <nav class="toc" aria-label="目次">
+    <details open>
+      <summary>目次</summary>
+      <ol>
+        <li><a href="#overview"><span>01</span>全体像</a></li>
+        <li><a href="#layers"><span>02</span>層と依存の向き</a></li>
+        <li><a href="#order"><span>03</span>注文の状態遷移</a></li>
+        <li><a href="#inventory"><span>04</span>在庫と引当</a></li>
+        <li><a href="#request"><span>05</span>リクエストの流れ</a></li>
+        <li><a href="#saga"><span>06</span>注文と在庫の Saga</a></li>
+        <li><a href="#outbox"><span>07</span>イベントの配送</a></li>
+        <li><a href="#edge"><span>08</span>エッジケース</a></li>
+        <li><a href="#tests"><span>09</span>テスト</a></li>
+        <li><a href="#decisions"><span>10</span>設計判断</a></li>
+        <li><a href="#start"><span>11</span>始め方</a></li>
+      </ol>
+    </details>
+  </nav>
+
+  <main>
+    <section id="overview">
+      <div class="section-head"><span class="no">01</span><h2>全体像</h2></div>
+      <p>コンテキストごとに <code>src/modules/&lt;name&gt;/</code> と PostgreSQL のスキーマを分け、テーブルの持ち主をはっきりさせている。同期の問い合わせはカタログへの 1 方向だけで、在庫と注文はイベントだけでつながるので、コンテキスト間の依存に循環は無い。</p>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>コンテキスト</th><th>持っているもの</th><th>他との関係</th></tr></thead>
+          <tbody>
+            <tr><td><code>catalog</code></td><td>商品の名前・価格・販売状態、販売数のリードモデル</td><td>上流。<span class="pill sync">CatalogApi</span> を公開する</td></tr>
+            <tr><td><code>inventory</code></td><td>商品ごとの在庫、注文ごとの引当の記録</td><td>カタログを ACL 越しに読み、注文とはイベントでやりとりする</td></tr>
+            <tr><td><code>ordering</code></td><td>注文とその状態遷移</td><td>カタログを ACL 越しに読み、在庫とはイベントでやりとりする</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <figure>
+        <div class="diagram"><pre class="mermaid">
+flowchart TB
+  catalog["catalog&lt;br/&gt;商品・販売数"]
+  inventory["inventory&lt;br/&gt;在庫・引当"]
+  ordering["ordering&lt;br/&gt;注文"]
+  catalog -- "CatalogApi（同期）" --> ordering
+  catalog -- "CatalogApi（同期）" --> inventory
+  ordering -- "OrderPlaced / OrderCancelled / OrderShipped" --> inventory
+  inventory -- "StockReserved / StockReservationFailed" --> ordering
+  ordering -- "OrderShipped" --> catalog
+</pre></div>
+        <figcaption><b>図 1</b>コンテキストの関係。同期の矢印は受け手の ACL が自分の言葉に訳し、イベントの矢印は outbox を通って届く。ID の型もコンテキストごとに別に持つ。</figcaption>
+      </figure>
+    </section>
+
+    <section id="layers">
+      <div class="section-head"><span class="no">02</span><h2>層と依存の向き</h2></div>
+      <p>各コンテキストの内側はヘキサゴナル（ポートとアダプター）。依存は外から内への一方向で、<code>test/architecture.test.ts</code> が全ファイルの import を走査して強制する。</p>
+      <figure>
+        <div class="diagram"><pre class="mermaid">
+flowchart LR
+  P["presentation&lt;br/&gt;Elysia のルート"] --> A["application&lt;br/&gt;ユースケース・ポート"]
+  I["infrastructure&lt;br/&gt;Drizzle・ACL・イベントの受け口"] --> A
+  A --> D["domain&lt;br/&gt;集約・値オブジェクト"]
+  I --> D
+  P --> D
+  I -. "型だけ" .-> C["他コンテキストの contract.ts"]
+</pre></div>
+        <figcaption><b>図 2</b>層の依存。他のコンテキストに触れてよいのは contract.ts だけで、触ってよいのは infrastructure と module.ts だけ。</figcaption>
+      </figure>
+      <div class="table-wrap">
+        <table class="data wide">
+          <thead><tr><th>層</th><th>置くもの</th><th>import してよいもの</th></tr></thead>
+          <tbody>
+            <tr><td><code>domain</code></td><td>集約、値オブジェクト、ドメインサービス、イベントの型、リポジトリのインターフェース</td><td>同じコンテキストの domain と <code>shared/domain</code> だけ。パッケージも Bun も不可</td></tr>
+            <tr><td><code>application</code></td><td>ユースケース、クエリのポート、外部に求めることのポート</td><td>上に加えて application・自分の contract・<code>shared/application</code></td></tr>
+            <tr><td><code>infrastructure</code></td><td>Drizzle のリポジトリとクエリ、ACL、イベントの受け口、テーブル定義</td><td>domain・application・infrastructure、他コンテキストの contract、任意のパッケージ</td></tr>
+            <tr><td><code>presentation</code></td><td>Elysia のルート、HTTP のスキーマ、エラー → ステータスの表</td><td>domain・application・presentation、<code>elysia</code> と <code>@elysiajs/*</code></td></tr>
+            <tr><td><code>module.ts</code></td><td>コンテキスト内の組み立て（呼ぶのは <code>bootstrap.ts</code> だけ）</td><td>自分のコンテキストのすべて、他コンテキストの contract</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>domain と application では <code>Date.now()</code>・<code>new Date()</code>・<code>Math.random()</code>・<code>Bun.*</code>・<code>process.*</code> も使えない。時刻と ID は <code>Clock</code> と <code>IdGenerator</code> から受け取るので、テストで時間を進めて期限の境界を突ける。</p>
+
+      <h3>エラーの扱い</h3>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>種類</th><th>表し方</th><th>HTTP</th></tr></thead>
+          <tbody>
+            <tr><td>入力の形が違う</td><td>Elysia（TypeBox）の検証が止める</td><td>400</td></tr>
+            <tr><td>業務ルール違反</td><td>ユースケースが <code>Result</code> の <code>Err</code> で返す</td><td>表で決める（422・409）</td></tr>
+            <tr><td>見つからない</td><td><code>Err</code>（<code>OrderNotFound</code> など）</td><td>404</td></tr>
+            <tr><td>同時更新の衝突</td><td><code>ConcurrencyError</code> を投げる（DB のデッドロックも読み替える）</td><td>409</td></tr>
+            <tr><td>想定外</td><td>例外（応答がスキーマに合わない場合を含む）</td><td>500</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>業務エラーは RFC 9457 の Problem Details（<code>type: urn:problem:&lt;エラー名&gt;</code>）。エラー名とステータスの対応表に書き漏れると型検査が通らず、Problem Details の予約名（<code>status</code> など）を持つエラーも型で渡せない。</p>
+    </section>
+
+    <section id="order">
+      <div class="section-head"><span class="no">03</span><h2>注文の状態遷移</h2></div>
+      <p>注文は受け付けた時点では在庫の確保待ち（<code>placed</code>）。在庫コンテキストの判断で確定か却下になり、確定したものだけが出荷できる。どの状態で何ができるかは <code>ORDER_TRANSITIONS</code> という表 1 つにだけ書き、実行時の判定・操作ごとの状態の型・API が返す「いまできる操作（<code>actions</code>）」をそこから作る。</p>
+      <figure>
+        <div class="diagram"><pre class="mermaid">
+stateDiagram-v2
+  [*] --> placed: place
+  placed --> confirmed: confirm（在庫を確保できた）
+  placed --> rejected: reject（在庫が足りない）
+  placed --> cancelled: cancel（お客様）／expire（15 分）
+  confirmed --> shipped: ship
+  confirmed --> cancelled: cancel
+  shipped --> [*]
+  cancelled --> [*]
+  rejected --> [*]
+</pre></div>
+        <figcaption><b>図 3</b>注文の状態。期限切れ（expire）はお客様の取消と同じ OrderCancelled を出し、cancelledBy が system になる。</figcaption>
+      </figure>
+      <div class="table-wrap">
+        <table class="matrix">
+          <caption class="note" style="caption-side: bottom; text-align: left; padding: 8px 12px;">5 状態 × 5 操作のすべてをドメインのテストが確かめている。表に無い組み合わせは <code>InvalidOrderTransition</code>（HTTP 409）。</caption>
+          <thead><tr><th scope="col">状態＼操作</th><th scope="col">confirm</th><th scope="col">reject</th><th scope="col">expire</th><th scope="col">cancel</th><th scope="col">ship</th></tr></thead>
+          <tbody>
+            <tr><th scope="row">placed</th><td class="go">→ confirmed</td><td class="go">→ rejected</td><td class="go">→ cancelled</td><td class="go">→ cancelled</td><td class="no">409</td></tr>
+            <tr><th scope="row">confirmed</th><td class="no">409</td><td class="no">409</td><td class="no">409</td><td class="go">→ cancelled</td><td class="go">→ shipped</td></tr>
+            <tr><th scope="row">shipped</th><td class="no">409</td><td class="no">409</td><td class="no">409</td><td class="no">409</td><td class="no">409</td></tr>
+            <tr><th scope="row">cancelled</th><td class="no">409</td><td class="no">409</td><td class="no">409</td><td class="no">409</td><td class="no">409</td></tr>
+            <tr><th scope="row">rejected</th><td class="no">409</td><td class="no">409</td><td class="no">409</td><td class="no">409</td><td class="no">409</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>状態ごとに持てる値は判別共用体で分ける。「出荷済みなのに追跡番号が無い」状態は型の上で作れず、DB でも状態ごとの必須列を CHECK 制約で守る。集約は不変で、<code>order.cancel()</code> は自分を書き換えず、新しい Order と OrderCancelled を返す。</p>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>集約の規則</th><th>値</th></tr></thead>
+          <tbody>
+            <tr><td>明細の数</td><td>1〜50 行（価格を引く前に <code>OrderRequest.parse</code> で確かめる）</td></tr>
+            <tr><td>数量</td><td>1〜99 の整数。同じ商品は 1 行だけ</td></tr>
+            <tr><td>合計</td><td>100 万円まで（ちょうどは可）</td></tr>
+            <tr><td>在庫の確保を待つ時間</td><td>15 分。1 ミリ秒前は取り消せず、ちょうどから期限切れ</td></tr>
+            <tr><td>取消の理由</td><td>NFC に正規化し、見た目の文字数で 1〜200。改行は可</td></tr>
+            <tr><td>追跡番号</td><td>NFKC で全角を半角に、英字を大文字に（「ｊｐ１２３４－５６７８」→「JP1234-5678」）</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="inventory">
+      <div class="section-head"><span class="no">04</span><h2>在庫と引当</h2></div>
+      <p>在庫コンテキストには集約が 2 つある。商品ごとの在庫 <code>StockItem</code>（<code>0 ≤ reserved ≤ onHand ≤ 1,000,000</code>）と、注文ごとの引当の記録 <code>Reservation</code>。記録があるので、イベントが重複しても順番が入れ替わっても、在庫を二重に動かさない。</p>
+      <figure>
+        <div class="diagram"><pre class="mermaid">
+stateDiagram-v2
+  [*] --> reserved: 全部引き当てた
+  [*] --> rejected: 足りなかった
+  [*] --> voided: 引当より先に取消が届いた
+  reserved --> released: release（取消）
+  reserved --> fulfilled: fulfill（出荷）
+</pre></div>
+        <figcaption><b>図 4</b>引当の記録。rejected と voided は何も持たない終端で、あとから届いた依頼を断るために残す。</figcaption>
+      </figure>
+      <div class="table-wrap">
+        <table class="data wide">
+          <thead><tr><th>いまの記録</th><th>OrderPlaced（引当）</th><th>OrderCancelled（戻す）</th><th>OrderShipped（出庫）</th></tr></thead>
+          <tbody>
+            <tr><td>無し</td><td>引き当てる</td><td>voided を残す</td><td>不整合として例外</td></tr>
+            <tr><td><code>reserved</code></td><td>何もしない（重複）</td><td>在庫に戻して released</td><td>在庫から出して fulfilled</td></tr>
+            <tr><td><code>rejected</code> ・ <code>voided</code> ・ <code>released</code></td><td>何もしない</td><td>何もしない</td><td>不整合として例外</td></tr>
+            <tr><td><code>fulfilled</code></td><td>何もしない</td><td>不整合として例外</td><td>何もしない（重複）</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>「不整合として例外」は、注文の遷移表が許さないので起きないはずの組み合わせ。握りつぶさずに投げ、リトライとデッドレターで人が気づけるようにしている。</p>
+      <h3>ドメインサービス allocate</h3>
+      <p>注文 1 件分の在庫を<strong>全部引き当てるか、何も引き当てないか</strong>で決める。複数の StockItem にまたがる判断なので、どの集約のメソッドにもできない。同じ商品の行は合算し、一度も入荷していない商品は在庫 0 として扱い、足りなければ不足（商品・求めた数・あった数）をすべて報告する。</p>
+      <p>1 トランザクションで複数の集約を変えるのは「1 トランザクション 1 集約」から外れるが、注文単位の全部か無しかが業務の要求なので意図して外している。代わりに在庫の行ロックを<strong>商品 ID の順</strong>に取り、デッドロックを避ける。</p>
+      <div class="table-wrap">
+        <table class="data">
+          <thead><tr><th>対象</th><th>同時更新への備え</th><th>理由</th></tr></thead>
+          <tbody>
+            <tr><td>注文・商品・引当の記録</td><td>楽観ロック（<code>version</code> 列）＋読み直し</td><td>同じ行を同時に触ることがまれ</td></tr>
+            <tr><td>在庫（StockItem）</td><td>悲観ロック（<code>FOR UPDATE</code>、商品 ID の順）</td><td>人気商品に引当が集中する。順番待ちのほうがやり直しの連鎖より速い</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="request">
+      <div class="section-head"><span class="no">05</span><h2>リクエストの流れ</h2></div>
+      <p>トランザクションは AsyncLocalStorage に載せ（アンビエントトランザクション）、リポジトリは「いまのトランザクション」を自分で拾う。ユースケースは tx を受け渡さず、<code>UnitOfWork.run</code> だけを知る。<code>Err</code> を返すか例外でロールバックし、入れ子はセーブポイントになる。</p>
+      <figure>
+        <div class="diagram"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant C as クライアント
+  participant R as ルート
+  participant K as 冪等キー
+  participant U as placeOrder
+  participant G as ACL（カタログ）
+  participant O as Order
+  participant DB as DB（1 トランザクション）
+  C->>R: POST /orders（Idempotency-Key）
+  R->>R: 形を検証（壊れていれば 400）
+  R->>K: キーを押さえる（再送なら前回の応答を返す）
+  K->>U: placeOrder
+  U->>U: 明細の数・重複・数量（誤りなら 422）
+  U->>G: 注文できる商品と単価
+  U->>O: Order.place（上限金額など）
+  O-->>U: 新しい Order と OrderPlaced
+  U->>DB: orders・order_lines・outbox に書く
+  K->>DB: 応答を記録してコミット
+  R-->>C: 201（status は placed）
+</pre></div>
+        <figcaption><b>図 5</b>POST /orders。冪等キーの記録・注文・outbox が 1 つのトランザクションで確定する。同じキーの同時送信は一意制約で待たせる。</figcaption>
+      </figure>
+    </section>
+
+    <section id="saga">
+      <div class="section-head"><span class="no">06</span><h2>注文と在庫の Saga</h2></div>
+      <p>注文の確定には在庫コンテキストの判断が要る。全体を仕切る役（オーケストレーター）は置かず、お互いのイベントに反応して進むコレオグラフィ型にしている。取消は Saga の補償で、引き当てていれば戻し、まだなら「あとから来る引当を断る」記録を残す。</p>
+      <figure>
+        <div class="diagram"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant O as 注文
+  participant X as Outbox / Relay
+  participant I as 在庫
+  participant C as カタログ
+  O->>X: OrderPlaced（placed）
+  X->>I: 引当
+  alt 全部足りる
+    I->>X: StockReserved
+    X->>O: 確定（confirmed）
+  else 1 つでも足りない
+    I->>X: StockReservationFailed（在庫は動かさない）
+    X->>O: 却下（rejected）
+  end
+  O->>X: OrderShipped（confirmed のときだけ）
+  X->>I: 出庫（onHand と reserved を減らす）
+  X->>C: 販売数を足す
+</pre></div>
+        <figcaption><b>図 6</b>確保できたとき・足りなかったとき。1 回の drain で OrderPlaced から OrderConfirmed まで流れる。</figcaption>
+      </figure>
+      <figure>
+        <div class="diagram"><pre class="mermaid">
+sequenceDiagram
+  autonumber
+  participant O as 注文
+  participant X as Outbox / Relay
+  participant I as 在庫
+  O->>X: OrderPlaced
+  Note over O: 確保を待つあいだに取消（または 15 分で期限切れ）
+  O->>X: OrderCancelled（cancelled）
+  X->>I: 引当（OrderPlaced が先に届く）
+  I->>X: StockReserved
+  X->>I: 戻す（released）
+  X->>O: 確保の知らせは cancelled なので無視
+</pre></div>
+        <figcaption><b>図 7</b>確保待ちの取消。同じ注文のイベントは積まれた順に届くので、在庫は必ず元に戻る。</figcaption>
+      </figure>
+      <ul class="prose-list">
+        <li>取消・期限切れのあとに届いた「確保できた」は、注文が遷移表で断って無視する。在庫は取消のイベントで戻る。</li>
+        <li>OrderPlaced がデッドレターになって取消だけが届いたときは、在庫が <code>voided</code> を残す。あとで OrderPlaced を手で再開しても引き当てない。</li>
+        <li>在庫の知らせがいつまでも来ない注文は、15 分で期限切れになる（30 秒ごとの定期ジョブ）。</li>
+        <li>参加者が 3 者以上になったり、複数段の補償が要るようになったら、注文ごとの進行を持つプロセスマネージャーに切り替える。</li>
+      </ul>
+    </section>
+
+    <section id="outbox">
+      <div class="section-head"><span class="no">07</span><h2>イベントの配送</h2></div>
+      <p>集約の変更とイベントを同じトランザクションで outbox に書き、コミット後に <code>OutboxRelay</code> が配送する。メッセージブローカーは使わず、同じ PostgreSQL の上で完結させている。</p>
+      <figure>
+        <div class="diagram"><pre class="mermaid">
+flowchart TD
+  pick["配送待ちを 1 件ロックして取る&lt;br/&gt;同じ集約の古いものが残っていれば待つ&lt;br/&gt;他のインスタンスが持っていれば飛ばす"]
+  pick -->|無い| done(["終わり"])
+  pick -->|ある| each["購読ごとにセーブポイント&lt;br/&gt;処理して配送済みを記録（済みなら飛ばす）"]
+  each --> ok{"全部成功?"}
+  ok -->|はい| pub["配送済みにする"] --> pick
+  ok -->|いいえ| fail["失敗を記録し&lt;br/&gt;2・4・8…秒後にリトライ"]
+  fail --> dead{"規定回数?"}
+  dead -->|はい| dl["デッドレター"] --> pick
+  dead -->|いいえ| pick
+</pre></div>
+        <figcaption><b>図 8</b>OutboxRelay の 1 周。購読の書き込みと「配送済み」の記録は同じトランザクションで確定する。</figcaption>
+      </figure>
+      <div class="guarantees">
+        <div class="guarantee"><h4>購読ごとに 1 回</h4><p>処理と配送済みの記録を同じトランザクションで確定する。同じ DB に書くだけの購読は二重に適用されない。</p></div>
+        <div class="guarantee"><h4>失敗は巻き込まない</h4><p>購読ごとのセーブポイントで、失敗した購読の書き込みだけを戻す。成功した購読には二度届けない。</p></div>
+        <div class="guarantee"><h4>集約ごとの順序</h4><p>同じ集約の古いイベントが配送待ちなら、新しいものは待つ。ほかの集約は待たせない。</p></div>
+        <div class="guarantee"><h4>毒メッセージを止める</h4><p>決めた回数（デフォルト 10）失敗したらデッドレターにして、同じ集約の後続を流す。</p></div>
+        <div class="guarantee"><h4>複数台で動かせる</h4><p><code>FOR UPDATE SKIP LOCKED</code> で 1 件ずつ取り、同じイベントを取り合わない。</p></div>
+        <div class="guarantee"><h4>太らない</h4><p>配送済みは 7 日、冪等キーは 24 時間で定期ジョブが消す。</p></div>
+      </div>
+      <p class="note">外部のサービスを呼ぶ購読（メール送信など）は DB と同じトランザクションに入れられないので「少なくとも 1 回」になる。受け手の側で重複を捨てられるように作る。購読の名前は配送済みの記録に使うので、運用に乗せたあとは変えない。</p>
+    </section>
+
+    <section id="edge">
+      <div class="section-head"><span class="no">08</span><h2>エッジケース</h2></div>
+      <p>このテンプレートが扱っているエッジケースと、それを確かめているテスト。<span class="found">★ テストで発見</span>は、テストを書いている途中で実際に見つかった不具合。</p>
+      <div class="filters" role="group" aria-label="種類で絞り込む">
+        <button type="button" data-filter="all" aria-pressed="true">すべて<span class="count"></span></button>
+        <button type="button" data-filter="input" aria-pressed="false">入力と値<span class="count"></span></button>
+        <button type="button" data-filter="concurrency" aria-pressed="false">同時実行<span class="count"></span></button>
+        <button type="button" data-filter="http" aria-pressed="false">HTTP<span class="count"></span></button>
+        <button type="button" data-filter="events" aria-pressed="false">イベントと Saga<span class="count"></span></button>
+        <button type="button" data-filter="data" aria-pressed="false">データ<span class="count"></span></button>
+      </div>
+      <div class="table-wrap">
+        <table class="data wide" id="edge-table">
+          <thead><tr><th>状況</th><th>放っておくと</th><th>扱い</th><th>テスト</th></tr></thead>
+          <tbody>
+            <tr data-cat="input"><td>「か」+ 結合用濁点 と「が」</td><td>見た目が同じ名前が別々に保存される</td><td>NFC に正規化してから保存</td><td><code>product.test.ts</code></td></tr>
+            <tr data-cat="input"><td>絵文字「👨‍👩‍👧」</td><td>1 文字が 5 文字以上と数えられる</td><td>書記素クラスタで数える（<code>Intl.Segmenter</code>）</td><td><code>order.test.ts</code></td></tr>
+            <tr data-cat="input"><td>前後の全角空白・制御文字</td><td>空白だけの名前、崩れるログ</td><td>trim（U+3000 も）、制御文字は拒否。取消の理由だけ改行可</td><td><code>product.test.ts</code></td></tr>
+            <tr data-cat="input"><td>全角の追跡番号</td><td>同じ番号が別物になる</td><td>NFKC と大文字化でそろえる</td><td><code>order.test.ts</code></td></tr>
+            <tr data-cat="input"><td>数量 0・小数・NaN</td><td>在庫や金額が壊れる</td><td>値オブジェクトが拒否（422）</td><td><code>order.test.ts</code></td></tr>
+            <tr data-cat="input"><td>明細が 1 万行</td><td>カタログに 1 万件問い合わせる</td><td>価格を引く前に 50 行までに絞る。本文の上限（413）も効く</td><td><code>place-order.test.ts</code></td></tr>
+            <tr data-cat="input"><td>同じ商品の明細が 2 行</td><td>数量の意味があいまい</td><td>注文は拒否。在庫の引当は合算して判断（上流が変わっても数え間違えない）</td><td><code>allocation.test.ts</code></td></tr>
+            <tr data-cat="input"><td>合計がちょうど上限</td><td>境界がぶれる</td><td>ちょうどは可、1 円超えたら拒否</td><td><code>order.test.ts</code></td></tr>
+            <tr data-cat="input"><td>金額の計算が安全な整数を超える</td><td>黙って丸められる</td><td><code>Money</code> が RangeError（確認漏れのバグとして止める）</td><td>—</td></tr>
+            <tr data-cat="input"><td><span class="found">★ テストで発見</span>期限ちょうど（15 分 0 秒）</td><td>ドメインは期限切れと判断するのに、検索が <code>&lt;</code> で拾わない</td><td>検索も境界を含め（<code>&lt;=</code>）、名前で含むことを明示</td><td><code>ordering.test.ts</code></td></tr>
+            <tr data-cat="concurrency"><td>同じ注文を同時に取り消す</td><td>両方成功し、イベントが 2 回出る</td><td>楽観ロック。負けた側は読み直して 409</td><td><code>ordering.test.ts</code></td></tr>
+            <tr data-cat="concurrency"><td>最後の 1 個を 2 件が取り合う</td><td>売り越す</td><td>在庫の行ロックで順番に判断。1 件確定、1 件却下</td><td><code>ordering.test.ts</code></td></tr>
+            <tr data-cat="concurrency"><td>商品 A・B を逆順に含む注文が同時に来る</td><td>デッドロック</td><td>ロックを常に商品 ID の順に取る</td><td><code>concurrency.test.ts</code></td></tr>
+            <tr data-cat="concurrency"><td>DB がデッドロック・シリアライゼーション失敗を検出</td><td>500 になる</td><td>SQLSTATE 40P01・40001 を <code>ConcurrencyError</code> に読み替え（409・リトライ）</td><td><code>unit-of-work.test.ts</code></td></tr>
+            <tr data-cat="concurrency"><td>初めての入荷が同時に 2 件</td><td>無い行はロックできず、片方が一意制約で失敗</td><td>追加の衝突を読み直してやり直す</td><td><code>inventory.test.ts</code></td></tr>
+            <tr data-cat="concurrency"><td>期限切れの処理と取消・確定が同時</td><td>二重に取り消す</td><td>1 件ずつ別トランザクション。負けたら飛ばす</td><td>—</td></tr>
+            <tr data-cat="http"><td>タイムアウトしたクライアントの再送</td><td>注文が 2 件できる</td><td><code>Idempotency-Key</code>。記録と処理を同じトランザクションで確定し、前回の応答を返す</td><td><code>ordering.test.ts</code></td></tr>
+            <tr data-cat="http"><td>同じキーの同時送信</td><td>両方が実行される</td><td>先にキーの行を作り、後の方は一意制約で待たせる</td><td><code>ordering.test.ts</code></td></tr>
+            <tr data-cat="http"><td>同じキーで違うボディ</td><td>取り違えた応答</td><td>ボディのフィンガープリントが違えば 422</td><td><code>ordering.test.ts</code></td></tr>
+            <tr data-cat="http"><td>処理の途中で落ちる</td><td>キーだけ残って二度と実行できない</td><td>例外ならキーの記録ごとロールバック</td><td>—</td></tr>
+            <tr data-cat="http"><td><span class="found">★ テストで発見</span>エラーの項目名が予約名と同じ</td><td>注文の <code>status</code> が HTTP ステータスを上書きする</td><td>項目名を変え、予約名を持つエラーは型で渡せなくした</td><td>型検査</td></tr>
+            <tr data-cat="http"><td><span class="found">★ テストで発見</span>応答がスキーマに合わない</td><td>サーバーのバグなのに 400 と返る</td><td>応答の検証エラーは 500 にしてログに残す</td><td>—</td></tr>
+            <tr data-cat="http"><td>巨大な本文</td><td>メモリを食う</td><td>パースする前に 413</td><td><code>http.test.ts</code></td></tr>
+            <tr data-cat="events"><td>保存に失敗した操作のイベント</td><td>起きていないことが伝わる</td><td>outbox を同じトランザクションで書く</td><td><code>outbox-relay.test.ts</code></td></tr>
+            <tr data-cat="events"><td>購読の処理が失敗する</td><td>一部だけ書き込まれる</td><td>セーブポイントで戻し、指数バックオフでリトライ</td><td><code>outbox-relay.test.ts</code></td></tr>
+            <tr data-cat="events"><td>購読の片方だけが失敗</td><td>成功した方にもう一度届く</td><td>購読ごとの配送記録で飛ばす</td><td><code>outbox-relay.test.ts</code></td></tr>
+            <tr data-cat="events"><td>同じ集約のイベントの追い越し</td><td>取消が引当より先に処理される</td><td>古いものが配送待ちなら新しいものは待つ</td><td><code>outbox-relay.test.ts</code></td></tr>
+            <tr data-cat="events"><td>何度やっても失敗するイベント</td><td>後続が止まり続ける</td><td>規定回数でデッドレター、後続は流す</td><td><code>outbox-relay.test.ts</code></td></tr>
+            <tr data-cat="events"><td>同じイベントが 2 回届く</td><td>在庫が二重に引き当てられる</td><td>注文ごとの引当記録があれば何もしない</td><td><code>reservations.test.ts</code></td></tr>
+            <tr data-cat="events"><td>引当より先に取消が届く</td><td>あとの引当で在庫が戻らない</td><td>voided を残し、あとの引当を断る</td><td><code>reservations.test.ts</code></td></tr>
+            <tr data-cat="events"><td>取消のあとに「確保できた」が届く</td><td>取り消した注文が確定する</td><td>注文は遷移表で断って無視、在庫は取消で戻る</td><td><code>ordering.test.ts</code></td></tr>
+            <tr data-cat="events"><td>在庫の知らせがいつまでも来ない</td><td>確保待ちのまま残る</td><td>15 分で期限切れ（システムの取消）</td><td><code>ordering.test.ts</code></td></tr>
+            <tr data-cat="events"><td>在庫不足で断った注文の取消</td><td>持っていない在庫を戻す</td><td>rejected は何も持たないので何もしない</td><td><code>reservations.test.ts</code></td></tr>
+            <tr data-cat="events"><td>引当の無い注文の出荷の知らせ</td><td>在庫が負になる</td><td>不整合として例外（デッドレターで気づく）</td><td><code>reservations.test.ts</code></td></tr>
+            <tr data-cat="events"><td>購読の名前を変える</td><td>過去のイベントがもう一度届く</td><td>運用に乗せたら変えない</td><td>—</td></tr>
+            <tr data-cat="events"><td>複数台で Job が重なる</td><td>同じ処理が 2 回走る</td><td>配送は SKIP LOCKED、期限切れは楽観ロック</td><td><code>concurrency.test.ts</code></td></tr>
+            <tr data-cat="data"><td>DB を直接書き換えて状態と列が食い違う</td><td>読み込んだ集約が壊れる</td><td>CHECK 制約で守り、欠けていれば黙って直さずに例外</td><td>—</td></tr>
+            <tr data-cat="data"><td>出荷済みなのに追跡番号が無い</td><td>どこかで null を踏む</td><td>状態を判別共用体にして型の上で作れなくする</td><td>型検査</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">同時実行の性質は、2 つのインスタンス（別々の接続プール）が同じ PostgreSQL で在庫 30 個の商品に 60 件の注文と同時の取消を流すテストで確かめている。確定はちょうど 30 件、同じ注文への同時取消は必ず 1 件だけ成功し、デッドロックとデッドレターは 0 件だった。</p>
+    </section>
+
+    <section id="tests">
+      <div class="section-head"><span class="no">09</span><h2>テスト</h2></div>
+      <div class="table-wrap">
+        <table class="data wide">
+          <thead><tr><th>種類</th><th>場所</th><th>使うもの</th><th>確かめること</th></tr></thead>
+          <tbody>
+            <tr><td>ドメイン</td><td><code>src/modules/*/domain/</code></td><td>関数を呼ぶだけ</td><td>不変条件、遷移表の全組み合わせ、時刻の境界、正規化</td></tr>
+            <tr><td>ユースケース</td><td><code>src/modules/*/application/</code></td><td>インメモリの fake</td><td>検査の順序、イベントの重複・順序の入れ替わり</td></tr>
+            <tr><td>結合</td><td><code>test/integration/</code></td><td>実際の DB</td><td>セーブポイント、配送の順序と記録、デッドレター、デッドロック、2 インスタンス</td></tr>
+            <tr><td>API</td><td><code>test/api/</code></td><td>本番と同じ組み立て + Eden Treaty</td><td>HTTP の契約、Saga の各経路、冪等キー、本文の上限</td></tr>
+            <tr><td>アーキテクチャ</td><td><code>test/architecture.test.ts</code></td><td>import の走査</td><td>依存の向き、domain・application の純粋さ</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p>テスト用の組み立ては定期ジョブを動かさず、配送（<code>relay.drain()</code>）とジョブ（<code>runJob(name)</code>）をテストが呼ぶ。時計は手で進める（<code>clock.advance(ms)</code>）ので、「配送の前と後」「期限の 1 ミリ秒前とちょうど」を別々に確かめられる。</p>
+      <div class="code-block"><pre><code>bun test                                                          # PGlite で 100 件（残り 2 件は実 PostgreSQL 専用）
+docker compose up -d
+TEST_DATABASE_URL=postgres://app:app@localhost:5432/app bun test   # 実 PostgreSQL で 102 件すべて</code></pre><button type="button" class="copy">コピー</button></div>
+    </section>
+
+    <section id="decisions">
+      <div class="section-head"><span class="no">10</span><h2>設計判断</h2></div>
+      <p>判断・理由・引き換えにしたもの。リポジトリの <code>docs/decisions.md</code> と同じ内容。</p>
+      <details class="adr"><summary><span>1</span>モジュラーモノリスで始め、コンテキストごとに DB のスキーマを分ける</summary><dl><dt>理由</dt><dd>境界は最初から守りたいが、ネットワーク越しの呼び出しと分散トランザクションはまだ要らない。スキーマが分かれていれば、他のテーブルを直接読む近道に気づける。</dd><dt>引き換え</dt><dd>1 つの DB に負荷が集まる。切り出すときは contract と outbox が継ぎ目になる。</dd></dl></details>
+      <details class="adr"><summary><span>2</span>業務エラーは Result、例外は障害だけ</summary><dl><dt>理由</dt><dd>起こりうる失敗が型に出て、HTTP ステータスの表の書き漏れをコンパイルで検出できる。</dd><dt>引き換え</dt><dd><code>if (!result.ok) return result;</code> が並ぶ。</dd></dl></details>
+      <details class="adr"><summary><span>3</span>集約は不変で、「新しい集約 + イベント」を返す</summary><dl><dt>理由</dt><dd>private なコンストラクタで不正な状態を組み立てさせず、イベントを出し忘れた変更も書けない。</dd><dt>引き換え</dt><dd>パラメータプロパティを使うので <code>erasableSyntaxOnly</code> は有効にできない。</dd></dl></details>
+      <details class="adr"><summary><span>4</span>状態機械は遷移表 1 つから作る</summary><dl><dt>理由</dt><dd>判定・状態の型・API の actions の出どころが 1 か所になり、状態を足しても直す場所がぶれない。</dd><dt>引き換え</dt><dd>型の計算（<code>StateAllowing</code>）が少し込み入る。</dd></dl></details>
+      <details class="adr"><summary><span>5</span>トランザクションは AsyncLocalStorage に載せる</summary><dl><dt>理由</dt><dd>tx をたらい回しにせず、ユースケースの引数を業務の言葉だけにできる。冪等キーのような外側からの包み込みも自然に書ける。</dd><dt>引き換え</dt><dd>トランザクションの中かどうかがコードから見えにくい。リポジトリは必ず <code>db()</code> 経由で触る。</dd></dl></details>
+      <details class="adr"><summary><span>6</span>イベントは Outbox で、集約ごとに順に、購読ごとに 1 回届ける</summary><dl><dt>理由</dt><dd>同じ DB で完結し、「保存したのに消えた」「二重に適用した」が構造的に起きない。順序の保証で受け手が考える組み合わせが減る。</dd><dt>引き換え</dt><dd>ポーリングなので数百ミリ秒遅れる。1 つの集約の失敗は、その集約の後続を止める。</dd></dl></details>
+      <details class="adr"><summary><span>7</span>Saga はコレオグラフィで組む</summary><dl><dt>理由</dt><dd>参加者が 2 者で分岐も 1 つなので、イベントを追えば流れが分かる。</dd><dt>引き換え</dt><dd>流れの全体像がコードの 1 か所に無い。参加者が増えたらプロセスマネージャーに切り替える。</dd></dl></details>
+      <details class="adr"><summary><span>8</span>楽観ロックと悲観ロックを使い分ける</summary><dl><dt>理由</dt><dd>注文は衝突がまれで読み直せばよい。在庫は集中するので順番待ちのほうが速く、ID 順ならデッドロックしない。</dd><dt>引き換え</dt><dd>在庫の引当はロックの間だけ直列になる。</dd></dl></details>
+      <details class="adr"><summary><span>9</span>冪等キーは処理と同じトランザクションで記録する</summary><dl><dt>理由</dt><dd>「処理したのに記録が無い」が起きず、同時送信は一意制約で待たせるだけで済む。</dd><dt>引き換え</dt><dd>外部のサービスを呼ぶ処理には使えない。</dd></dl></details>
+      <details class="adr"><summary><span>10</span>参照はクエリサービスで読む（CQRS-lite）</summary><dl><dt>理由</dt><dd>集約を表示の都合で曲げずに済み、一覧や集計の SQL を自由に書ける。</dd><dt>引き換え</dt><dd>リードモデルは結果整合で、少し遅れる。</dd></dl></details>
+      <details class="adr"><summary><span>11</span>開発とテストは PGlite、本番は Bun.SQL</summary><dl><dt>理由</dt><dd>Docker 無しで動き、SQL もマイグレーションも本番と同じ PostgreSQL の方言。</dd><dt>引き換え</dt><dd>同時実行の性質は実際の PostgreSQL でしか確かめられない。</dd></dl></details>
+      <details class="adr"><summary><span>12</span>ユースケースは関数で、DI コンテナを使わない</summary><dl><dt>理由</dt><dd>デコレーターも reflect-metadata も要らず、テストでは引数を差し替えるだけ。</dd><dt>引き換え</dt><dd>組み立てのコードを自分で書く。</dd></dl></details>
+      <details class="adr"><summary><span>13</span>Elysia は presentation 層に閉じ込める</summary><dl><dt>理由</dt><dd>Elysia 2.0 がベータで、上げるときに触る範囲を限りたい。業務の規則は値オブジェクトに一本化し、HTTP 以外の入口からも同じ規則が効く。</dd><dt>引き換え</dt><dd>OpenAPI に出すため同じ制約を HTTP のスキーマにも書きたくなる。書くなら形にとどめる。</dd></dl></details>
+    </section>
+
+    <section id="start">
+      <div class="section-head"><span class="no">11</span><h2>始め方</h2></div>
+      <div class="code-block"><pre><code>bun install
+bun run dev        # http://localhost:3000 ・ API ドキュメントは /openapi
+bun run check      # 型検査 + Biome + テスト</code></pre><button type="button" class="copy">コピー</button></div>
+      <h3>コンテキストを足す手順</h3>
+      <ol class="steps">
+        <li><code>src/modules/&lt;name&gt;/</code> に domain → application → infrastructure → presentation の順で作る。</li>
+        <li>テーブルは <code>infrastructure/schema.ts</code> に <code>pgSchema("&lt;name&gt;")</code> で定義し、<code>bun run db:generate</code>。</li>
+        <li>他のコンテキストに見せるものだけを <code>contract.ts</code> に出す。他を読むときは、自分の application にポートを定義し、infrastructure に ACL を置く。</li>
+        <li><code>module.ts</code> で組み立て、<code>src/bootstrap.ts</code> でルートを <code>.use()</code> し、購読を OutboxRelay に、定期ジョブをスケジューラーに渡す。</li>
+        <li><code>bun run check</code>。依存の向きを破っていれば <code>test/architecture.test.ts</code> が落ちる。</li>
+      </ol>
+    </section>
+  </main>
+
+  <footer>
+    リポジトリ elysia-ddd の <code>docs/</code>（architecture・domain-model・messaging・edge-cases・testing・decisions）と同じ内容を 1 ページにまとめたもの。
+  </footer>
+</div>
+
+<script>
+  (() => {
+    const buttons = [...document.querySelectorAll(".filters button")];
+    const rows = [...document.querySelectorAll("#edge-table tbody tr")];
+    for (const button of buttons) {
+      const filter = button.dataset.filter;
+      const count = filter === "all" ? rows.length : rows.filter((row) => row.dataset.cat === filter).length;
+      button.querySelector(".count").textContent = String(count);
+      button.addEventListener("click", () => {
+        for (const other of buttons) other.setAttribute("aria-pressed", String(other === button));
+        for (const row of rows) row.hidden = filter !== "all" && row.dataset.cat !== filter;
+      });
+    }
+
+    for (const button of document.querySelectorAll(".copy")) {
+      button.addEventListener("click", async () => {
+        const code = button.parentElement.querySelector("code");
+        const text = code.textContent.replace(/[ \t]+#.*$/gm, "").trim();
+        try {
+          await navigator.clipboard.writeText(text);
+          button.textContent = "コピーしました";
+        } catch {
+          const range = document.createRange();
+          range.selectNodeContents(code);
+          const selection = getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          button.textContent = "選択しました";
+        }
+        setTimeout(() => { button.textContent = "コピー"; }, 1600);
+      });
+    }
+  })();
+</script>
